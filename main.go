@@ -29,6 +29,21 @@ type Diagnostic struct {
 	Uptime 					string 	`json:"uptime"`
 }
 
+
+type Currencies struct {
+	Code string 	`json:"currency"`
+	Name string 	`json:"name"`
+	Symbol string 	`json:"symbol"`
+}
+
+/*
+For the response from the restcountries api
+*/
+type Country struct {
+	currencies []Currencies
+	borders []string `json:"border"`
+}
+
 // Returns the uptime of the service
 func uptime() time.Duration {
 	return time.Since(uptimeStart)
@@ -106,13 +121,38 @@ func diag(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+
+// Todo Add error handling for status code other than 200 on request to external apis
 // Handles the exchange/v1/exchangeborder/ request
 func exchangeborder(w http.ResponseWriter, r *http.Request){
+
+	// URL to invoke
+	url := "https://restcountries.eu/rest/v2/name/norway"
+
+	r, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		fmt.Errorf("Error in creating request:", err.Error())
+	}
+
+	// Setting content type -> effect depends on the service provider
+	r.Header.Add("content-type", "application/json")
+	// Instantiate the client
+	client := &http.Client{}
+
+	// Issue request
+	res, err := client.Do(r)
+	//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
+	if err != nil {
+		fmt.Errorf("Error in response:", err.Error())
+	}
+
+	/*
 	w.WriteHeader(http.StatusNotImplemented)
 	_, err := w.Write([]byte("501 Not Implemented"))
 	if err != nil {
 		// TODO add error message here
 	}
+	 */
 }
 
 // Handles the exchange/v1/exchangehistory/ request
