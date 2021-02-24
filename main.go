@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -29,19 +30,18 @@ type Diagnostic struct {
 	Uptime 					string 	`json:"uptime"`
 }
 
-
-type Currencies struct {
-	Code string 	`json:"currency"`
-	Name string 	`json:"name"`
-	Symbol string 	`json:"symbol"`
-}
-
 /*
 For the response from the restcountries api
 */
-type Country struct {
-	currencies []Currencies
-	borders []string `json:"border"`
+type Country []struct {
+	Currencies 				[]Currencies 	`json:"currencies"`
+	Borders 				[]string 		`json:"borders"`
+}
+
+type Currencies struct {
+	Code 					string 			`json:"code"`
+	Name 					string 			`json:"name"`
+	Symbol 					string 			`json:"symbol"`
 }
 
 // Returns the uptime of the service
@@ -127,7 +127,7 @@ func diag(w http.ResponseWriter, r *http.Request) {
 func exchangeborder(w http.ResponseWriter, r *http.Request){
 
 	// URL to invoke
-	url := "https://restcountries.eu/rest/v2/name/norway"
+	url := "https://restcountries.eu/rest/v2/name/norway?fields=borders;currencies"
 
 	r, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -145,6 +145,44 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	if err != nil {
 		fmt.Errorf("Error in response:", err.Error())
 	}
+
+	// HTTP Header content
+	fmt.Println("Status:", res.Status)
+	fmt.Println("Status code:", res.StatusCode)
+
+	fmt.Println("Content type:", res.Header.Get("content-type"))
+	fmt.Println("Protocol:", res.Proto)
+
+	// Print output
+	output, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Errorf("Error when reading response: ", err.Error())
+	}
+
+
+	/* JSON into struct */
+
+	var data Country
+
+	err = json.Unmarshal([]byte(string(output)), &data)
+
+	if err != nil {
+		// TODO proper error handling
+		fmt.Printf("\n ERROR IN UNMARSHAL cancelling")
+		return
+	}
+
+	fmt.Println(data[0].Borders[0])
+	fmt.Printf("\n")
+	fmt.Println(data[0].Borders[1])
+	fmt.Printf("\n")
+	fmt.Println(data[0].Currencies[0])
+	fmt.Printf("\n")
+	//fmt.Println(data.currencies[0])
+
+	fmt.Printf("\n Now from the other one \n")
+
+	fmt.Println(string(output))
 
 	/*
 	w.WriteHeader(http.StatusNotImplemented)
