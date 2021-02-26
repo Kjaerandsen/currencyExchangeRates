@@ -56,10 +56,53 @@ type Currencies struct {
 type OutCountry struct {
 	CountryName 				  	string
 	CountryCurrency					string
-	CountryValue					float64
+	CountryRate						float64
 }
 
-// Returns the uptime of the service
+// For the currency data retrieved from exchangeratesapi
+// Contains all possible currencies
+type CurrencyData struct {
+	Rates struct {
+		CAD float64 `json:"CAD"`
+		HKD float64 `json:"HKD"`
+		ISK float64 `json:"ISK"`
+		PHP float64 `json:"PHP"`
+		DKK float64 `json:"DKK"`
+		HUF float64 `json:"HUF"`
+		CZK float64 `json:"CZK"`
+		GBP float64 `json:"GBP"`
+		RON float64 `json:"RON"`
+		SEK float64 `json:"SEK"`
+		IDR float64 `json:"IDR"`
+		INR float64 `json:"INR"`
+		BRL float64 `json:"BRL"`
+		RUB float64 `json:"RUB"`
+		HRK float64 `json:"HRK"`
+		JPY float64 `json:"JPY"`
+		THB float64 `json:"THB"`
+		CHF float64 `json:"CHF"`
+		EUR float64 `json:"EUR"`
+		MYR float64 `json:"MYR"`
+		BGN float64 `json:"BGN"`
+		TRY float64 `json:"TRY"`
+		CNY float64 `json:"CNY"`
+		NOK float64 `json:"NOK"`
+		NZD float64 `json:"NZD"`
+		ZAR float64 `json:"ZAR"`
+		USD float64 `json:"USD"`
+		MXN float64 `json:"MXN"`
+		SGD float64 `json:"SGD"`
+		AUD float64 `json:"AUD"`
+		ILS float64 `json:"ILS"`
+		KRW float64 `json:"KRW"`
+		PLN float64 `json:"PLN"`
+	} `json:"rates"`
+	Base string `json:"base"`
+	Date string `json:"date"`
+}
+
+// Returns the uptime of the service based on
+// code found at https://stackoverflow.com/questions/37992660/golang-retrieve-application-uptime
 func uptime() time.Duration {
 	return time.Since(uptimeStart)
 }
@@ -162,6 +205,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	if err != nil {
 		fmt.Errorf("Error when reading response: ", err.Error())
 	}
+
 
 	//var borderingCountries[5] string
 

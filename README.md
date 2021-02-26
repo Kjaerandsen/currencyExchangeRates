@@ -131,3 +131,5 @@ The url parsing is based on a modified version of code in the "RESTstudent" exam
 "https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTstudent/cmd/students_server.go"
 The code to check if a string is an integer was retrieved from 
 "https://stackoverflow.com/questions/22593259/check-if-string-is-int"
+Uptime code is based on code from 
+https://stackoverflow.com/questions/37992660/golang-retrieve-application-uptime
