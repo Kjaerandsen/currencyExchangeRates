@@ -64,7 +64,8 @@ Path: exchangeborder/{:country_name}{?limit={:number}}
 
 `{:country_name}` refers to the English name for the country as supported by https://restcountries.eu/.
 
-`{?limit={:number}}` is an optional parameter that limits the number of currencies (`number`) of surrounding countries to be reported. 
+`{?limit={:number}}` is an optional parameter that limits the number of currencies (`number`) of surrounding countries to be reported.
+The limit parameter will be ignored if it does not contain an integer or if it is empty. 
 
 Where countries have multiple currencies, only the first one provided is reported. Where no currency is reported, the country is ignored.
 
@@ -124,3 +125,9 @@ Note: `<some value>` indicates placeholders for values to be populated by the se
 
 Credits:
 The description of the project contains a modified version the assignment instructions to describe the project.
+The url request is based on code from RESTclient found at
+"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTclient/cmd/main.go"
+The url parsing is based on a modified version of code in the "RESTstudent" example at 
+"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTstudent/cmd/students_server.go"
+The code to check if a string is an integer was retrieved from 
+"https://stackoverflow.com/questions/22593259/check-if-string-is-int"
