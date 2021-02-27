@@ -54,9 +54,9 @@ type Currencies struct {
 
 /* For the output currency data of each bordering country */
 type OutCountry struct {
-	CountryName 				  	string
-	CountryCurrency					string
-	CountryRate						float64
+	CountryName 			string
+	CountryCurrency			string
+	CountryRate				float64
 }
 
 // For the currency data retrieved from exchangeratesapi
@@ -574,13 +574,20 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	/* Sorting the map
-	keys := make([]string, 0, len(exchangeHistory.rates))
-	for k := range exchangeHistory.rates {
-		fmt.Println(k)
-		keys = append(keys, k)
+	// Testing map traversing
+	/*
+	for k, v := range exchangeHistory {
+		fmt.Println(k, "contains", v)
+		if k == "rates" {
+			for i, j := range k {
+				fmt.Println("Date:", i,"Value:", j)
+		}
 	}
-	*/
+
+	// Rates travering
+	//for i, j := range exchangeHistory["rates"] {
+
+	}*/
 
 	// Exporting the data
 	w.Header().Set("Content-Type", "application/json")
