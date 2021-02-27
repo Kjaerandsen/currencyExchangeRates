@@ -52,53 +52,11 @@ type Currencies struct {
 	Symbol 					string 			`json:"symbol"`
 }
 
-/* For the output currency data of each bordering country */
-type OutCountry struct {
-	CountryName 			string
-	CountryCurrency			string
-	CountryRate				float64
-}
-
 // For the currency data retrieved from exchangeratesapi
-// Contains all possible currencies
 type CurrencyData struct {
-	Rates struct {
-		CAD float64 `json:"CAD"`
-		HKD float64 `json:"HKD"`
-		ISK float64 `json:"ISK"`
-		PHP float64 `json:"PHP"`
-		DKK float64 `json:"DKK"`
-		HUF float64 `json:"HUF"`
-		CZK float64 `json:"CZK"`
-		GBP float64 `json:"GBP"`
-		RON float64 `json:"RON"`
-		SEK float64 `json:"SEK"`
-		IDR float64 `json:"IDR"`
-		INR float64 `json:"INR"`
-		BRL float64 `json:"BRL"`
-		RUB float64 `json:"RUB"`
-		HRK float64 `json:"HRK"`
-		JPY float64 `json:"JPY"`
-		THB float64 `json:"THB"`
-		CHF float64 `json:"CHF"`
-		EUR float64 `json:"EUR"`
-		MYR float64 `json:"MYR"`
-		BGN float64 `json:"BGN"`
-		TRY float64 `json:"TRY"`
-		CNY float64 `json:"CNY"`
-		NOK float64 `json:"NOK"`
-		NZD float64 `json:"NZD"`
-		ZAR float64 `json:"ZAR"`
-		USD float64 `json:"USD"`
-		MXN float64 `json:"MXN"`
-		SGD float64 `json:"SGD"`
-		AUD float64 `json:"AUD"`
-		ILS float64 `json:"ILS"`
-		KRW float64 `json:"KRW"`
-		PLN float64 `json:"PLN"`
-	} `json:"rates"`
-	Base string `json:"base"`
-	Date string `json:"date"`
+	Rates map[string]float64 	`json:"Rates"`
+	Base string 				`json:"base"`
+	Date string 				`json:"date"`
 }
 
 // Returns the uptime of the service based on
@@ -135,8 +93,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	// For the amount of bordering countries to handle
 	var bordercountryCount int
 	// Array of the country data used for final output, uses the OutCountry struct
-	// Size of 16 as that is the maximum amount of bordering countries a country in the world has.
-	var outCountries [16]OutCountry
 	// For the data from the bordering countries
 	var inputData BorderCountry
 	// Returns all the currency rates based on the base currency's value
@@ -286,7 +242,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		and sends restcountries requests for their currency information
 	*/
 	for i := 0; i < bordercountryCount; i++ {
-		fmt.Println(i)
 		// Get country information from the restcountries api
 		// SAMPLE REQUEST FOR TESTING https://restcountries.eu/rest/v2/alpha/FIN?fields=name;currencies
 		url := fmt.Sprintf("https://restcountries.eu/rest/v2/alpha/%s?fields=name;currencies", data[0].Borders[i])
@@ -329,92 +284,20 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		err = json.Unmarshal(output, &inputData)
 
 		if err != nil {
-			// TODO proper error handling
-			fmt.Printf("\n ERROR IN UNMARSHAL cancelling")
+			status := http.StatusInternalServerError
+			http.Error(w, "Error in parsing data", status)
 			return
 		}
 
 		// Gets the rate
-		switch inputData.Currencies[0].Code {
-			case "CAD":
-				rate = currencyData.Rates.CAD
-			case "HKD":
-				rate = currencyData.Rates.HKD
-			case "ISK":
-				rate = currencyData.Rates.ISK
-			case "PHP":
-				rate = currencyData.Rates.PHP
-			case "DKK":
-				rate = currencyData.Rates.DKK
-			case "HUF":
-				rate = currencyData.Rates.HUF
-			case "CZK":
-				rate = currencyData.Rates.CZK
-			case "GBP":
-				rate = currencyData.Rates.GBP
-			case "RON":
-				rate = currencyData.Rates.RON
-			case "SEK":
-				rate = currencyData.Rates.SEK
-			case "IDR":
-				rate = currencyData.Rates.IDR
-			case "INR":
-				rate = currencyData.Rates.INR
-			case "BRL":
-				rate = currencyData.Rates.BRL
-			case "RUB":
-				rate = currencyData.Rates.RUB
-			case "HRK":
-				rate = currencyData.Rates.HRK
-			case "JPY":
-				rate = currencyData.Rates.JPY
-			case "THB":
-				rate = currencyData.Rates.THB
-			case "CHF":
-				rate = currencyData.Rates.CHF
-			case "EUR":
-				rate = currencyData.Rates.EUR
-			case "MYR":
-				rate = currencyData.Rates.MYR
-			case "BGN":
-				rate = currencyData.Rates.BGN
-			case "TRY":
-				rate = currencyData.Rates.TRY
-			case "CNY":
-				rate = currencyData.Rates.CNY
-			case "NOK":
-				rate = currencyData.Rates.NOK
-			case "NZD":
-				rate = currencyData.Rates.NZD
-			case "ZAR":
-				rate = currencyData.Rates.ZAR
-			case "USD":
-				rate = currencyData.Rates.USD
-			case "MXN":
-				rate = currencyData.Rates.MXN
-			case "SGD":
-				rate = currencyData.Rates.SGD
-			case "AUD":
-				rate = currencyData.Rates.AUD
-			case "ILS":
-				rate = currencyData.Rates.ILS
-			case "KRW":
-				rate = currencyData.Rates.KRW
-			case "PLN":
-				rate = currencyData.Rates.PLN
-			default :
-				rate = 0.0
-		}
+		rate = currencyData.Rates[fmt.Sprintf("%s",inputData.Currencies[0].Code)]
 
-		// Put it into a map used later for currency info as well
-		outCountries[i].CountryName = inputData.Name
-		outCountries[i].CountryCurrency = inputData.Currencies[0].Code
-		outCountries[i].CountryRate = rate
+		// Format the data for the json output
 		outputText = fmt.Sprintf(`%s"%s":{"currency":"%s","rate":"%f"}`,
 			outputText,
-			outCountries[i].CountryName,
-			outCountries[i].CountryCurrency,
-			outCountries[i].CountryRate)
+			inputData.Name,
+			inputData.Currencies[0].Code,
+			rate)
 		// Adds trailing comma if it is not the last country
 		if i != bordercountryCount-1 {
 			outputText = fmt.Sprintf("%s,", outputText)
@@ -575,8 +458,8 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 	err = json.Unmarshal(output, &exchangeHistory)
 
 	if err != nil {
-		// TODO proper error handling
-		fmt.Printf("\n ERROR IN UNMARSHAL cancelling")
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
 		return
 	}
 
@@ -607,7 +490,9 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 		w.WriteHeader(http.StatusInternalServerError)
 		_, err := w.Write([]byte("500 Internal Server Error"))
 		if err != nil {
-			// TODO add error message here
+			status := http.StatusInternalServerError
+			http.Error(w, "500 Internal Server Error", status)
+			return
 		}
 	}
 }
@@ -620,7 +505,9 @@ func diag(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		_, err := w.Write([]byte("405 Method not allowed, please use GET."))
 		if err != nil {
-			// TODO add error message here
+			status := http.StatusInternalServerError
+			http.Error(w, "500 Internal Server Error", status)
+			return
 		}
 		return
 	}
@@ -652,7 +539,9 @@ func diag(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, err := w.Write([]byte("500 Internal Server Error"))
 		if err != nil {
-			// TODO add error message here
+			status := http.StatusInternalServerError
+			http.Error(w, "500 Internal Server Error", status)
+			return
 		}
 	}
 }
