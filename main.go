@@ -197,7 +197,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	// If the http statuscode retrieved from restcountries is not 200 / "OK"
 	if res.StatusCode != 200 {
 		status := http.StatusNotFound
-		http.Error(w, "Error in request to the restcountries api", status)
+		http.Error(w, "Error in request to the restcountries api, country name provided is probably wrong", status)
 		return
 	}
 
@@ -210,7 +210,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	}
 
 	// JSON into struct
-	err = json.Unmarshal([]byte(string(output)), &data)
+	err = json.Unmarshal(output, &data)
 
 	if err != nil {
 		status := http.StatusInternalServerError
@@ -221,7 +221,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	// Modified code retrieved from "https://stackoverflow.com/questions/22593259/check-if-string-is-int"
 	if i, err := strconv.Atoi(limit); err != nil {
 		// If it is not an integer
-		//fmt.Println(name)
 		bordercountryCount = len(data[0].Borders)
 	} else {
 		// If it is an integer and the integer is less than or equal to the size of the input data
@@ -231,9 +230,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		} else {
 			bordercountryCount = len(data[0].Borders)
 		}
-
-		//fmt.Println(limit)
-		//fmt.Println(name)
 	}
 
 	// Get currency information from exchangerates api
@@ -277,7 +273,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	// The currency code of the base currency, used for conversion and the final json output
 	//var baseCurrency = data[0].Currencies[0].Name
 
-	err = json.Unmarshal([]byte(string(output)), &currencyData)
+	err = json.Unmarshal(output, &currencyData)
 
 	if err != nil {
 		status := http.StatusInternalServerError
@@ -330,10 +326,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 			return
 		}
 
-		// The currency code of the base currency, used for conversion and the final json output
-		//var baseCurrency = data[0].Currencies[0].Name
-
-		err = json.Unmarshal([]byte(string(output)), &inputData)
+		err = json.Unmarshal(output, &inputData)
 
 		if err != nil {
 			// TODO proper error handling
@@ -442,24 +435,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 			return
 		}
 	}
-
-	/*
-	fmt.Println(currencyData.Rates)
-	fmt.Println(outCountries[1])
-	fmt.Println(bordercountryCount)
-	fmt.Println(data[0].Borders[0])
-	fmt.Printf("\n")
-	fmt.Println(data[0].Borders[1])
-	fmt.Printf("\n")
-	fmt.Println(data[0].Currencies[0])
-	fmt.Printf("\n")
-	//fmt.Println(data.currencies[0])
-	fmt.Printf("\nArray size %i", len(data[0].Borders))
-
-	fmt.Printf("\n Now from the other one \n")
-
-	fmt.Println(string(output))
-	 */
 }
 
 // Handles the exchange/v1/exchangehistory/ request
@@ -545,7 +520,7 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 	}
 
 	// JSON into struct
-	err = json.Unmarshal([]byte(string(output)), &data)
+	err = json.Unmarshal(output, &data)
 
 	if err != nil {
 		status := http.StatusNotFound
@@ -595,9 +570,9 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 
 	// The currency code of the base currency, used for conversion and the final json output
 	//var baseCurrency = data[0].Currencies[0].Name
-	fmt.Println([]byte(string(output)))
+	fmt.Println(output)
 
-	err = json.Unmarshal([]byte(string(output)), &exchangeHistory)
+	err = json.Unmarshal(output, &exchangeHistory)
 
 	if err != nil {
 		// TODO proper error handling
