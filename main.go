@@ -127,7 +127,6 @@ func redirect(w http.ResponseWriter, r *http.Request){
 	http.Redirect(w, r, r.URL.Path + "/", http.StatusSeeOther)
 }
 
-// Todo Add error handling for status code other than 200 on request to external apis
 // Handles the exchange/v1/exchangeborder/ request
 func exchangeborder(w http.ResponseWriter, r *http.Request){
 
@@ -176,7 +175,9 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 
 	r, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		fmt.Errorf("Error in creating request:", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in creating request", status)
+		return
 	}
 
 	// Setting content type -> effect depends on the service provider
@@ -188,7 +189,9 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	res, err := client.Do(r)
 	//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
 	if err != nil {
-		fmt.Errorf("Error in response:", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
+		return
 	}
 
 	// If the http statuscode retrieved from restcountries is not 200 / "OK"
@@ -201,15 +204,17 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	// Print output
 	output, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Errorf("Error when reading response: ", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
+		return
 	}
 
 	// JSON into struct
 	err = json.Unmarshal([]byte(string(output)), &data)
 
 	if err != nil {
-		// TODO proper error handling
-		fmt.Printf("\n ERROR IN UNMARSHAL cancelling")
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
 		return
 	}
 
@@ -236,7 +241,9 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 
 	r, err = http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		fmt.Errorf("Error in creating request:", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in sending request", status)
+		return
 	}
 
 	// Setting content type -> effect depends on the service provider
@@ -248,7 +255,9 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	res, err = client.Do(r)
 	//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
 	if err != nil {
-		fmt.Errorf("Error in response:", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
+		return
 	}
 
 	if res.StatusCode != 200 {
@@ -260,7 +269,9 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	// Print output
 	output, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Errorf("Error when reading response: ", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
+		return
 	}
 
 	// The currency code of the base currency, used for conversion and the final json output
@@ -269,8 +280,8 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	err = json.Unmarshal([]byte(string(output)), &currencyData)
 
 	if err != nil {
-		// TODO proper error handling
-		fmt.Printf("\n ERROR IN UNMARSHAL cancelling")
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
 		return
 	}
 
@@ -286,7 +297,9 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 
 		r, err := http.NewRequest(http.MethodGet, url, nil)
 		if err != nil {
-			fmt.Errorf("Error in creating request:", err.Error())
+			status := http.StatusInternalServerError
+			http.Error(w, "Error in sending request", status)
+			return
 		}
 
 		// Setting content type -> effect depends on the service provider
@@ -298,7 +311,9 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		res, err := client.Do(r)
 		//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
 		if err != nil {
-			fmt.Errorf("Error in response:", err.Error())
+			status := http.StatusInternalServerError
+			http.Error(w, "Error in parsing data", status)
+			return
 		}
 
 		if res.StatusCode != 200 {
@@ -310,7 +325,9 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		// Print output
 		output, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			fmt.Errorf("Error when reading response: ", err.Error())
+			status := http.StatusInternalServerError
+			http.Error(w, "Error in parsing data", status)
+			return
 		}
 
 		// The currency code of the base currency, used for conversion and the final json output
@@ -420,7 +437,9 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		w.WriteHeader(http.StatusInternalServerError)
 		_, err := w.Write([]byte("500 Internal Server Error"))
 		if err != nil {
-			// TODO add error message here
+			status := http.StatusInternalServerError
+			http.Error(w, "Error", status)
+			return
 		}
 	}
 
@@ -491,7 +510,9 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 
 	r, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		fmt.Errorf("Error in creating request:", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in sending request", status)
+		return
 	}
 
 	// Setting content type -> effect depends on the service provider
@@ -503,7 +524,9 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 	res, err := client.Do(r)
 	//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
 	if err != nil {
-		fmt.Errorf("Error in response:", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
+		return
 	}
 
 	// If the http statuscode retrieved from restcountries is not 200 / "OK"
@@ -516,7 +539,9 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 	// Print output
 	output, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Errorf("Error when reading response: ", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
+		return
 	}
 
 	// JSON into struct
@@ -535,7 +560,9 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 
 	r, err = http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		fmt.Errorf("Error in creating request:", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in sending request", status)
+		return
 	}
 
 	// Setting content type -> effect depends on the service provider
@@ -547,7 +574,9 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 	res, err = client.Do(r)
 	//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
 	if err != nil {
-		fmt.Errorf("Error in response:", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
+		return
 	}
 
 	if res.StatusCode != 200 {
@@ -559,7 +588,9 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 	// Print output
 	output, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Errorf("Error when reading response: ", err.Error())
+		status := http.StatusInternalServerError
+		http.Error(w, "Error in parsing data", status)
+		return
 	}
 
 	// The currency code of the base currency, used for conversion and the final json output
