@@ -446,35 +446,157 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 // Handles the exchange/v1/exchangehistory/ request
 func exchangehistory(w http.ResponseWriter, r *http.Request){
 
+	// For storing the data retrieved from the restcountries api
+	var data Country
+	//var exchangeHistory ExchangeHistory
+	var exchangeHistory map[string]interface {}
+
 	// Modified code based on code retrieved from the "RESTstudent" example at
 	//"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTstudent/cmd/students_server.go"
 	// Retrieves the country name from the url after the trailing slash
 	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) != 5 {
+	if len(parts) != 6 {
 		status := http.StatusBadRequest
-		http.Error(w, "Expecting format .../exchange/v1/exchangehistory/countryname", status)
+		http.Error(w, "Expecting format .../exchange/v1/{:country_name}/{:begin_date-end_date}", status)
 		return 	}
 	name := parts[4]
 
 	// Checks if the provided country name is empty
 	if name == "" {
 		status := http.StatusBadRequest
-		http.Error(w, "Missing country name. Expecting format .../exchange/v1/exchangehistory/countryname", status)
+		http.Error(w, "Missing country name. Expecting format .../{:country_name}/{:begin_date-end_date}", status)
 		return
 	}
 
-	var limit = r.FormValue("limit")
-
-	// Modified code retrieved from "https://stackoverflow.com/questions/22593259/check-if-string-is-int"
-	if _, err := strconv.Atoi(limit); err != nil {
-		// If it is not an integer
-		fmt.Println(name)
-	} else {
-		// If it is an integer
-		fmt.Println(limit)
-		fmt.Println(name)
+	// Check the start and end dates
+	dateparts := strings.Split(parts[5], "-")
+	if len(dateparts) != 6 {
+		status := http.StatusBadRequest
+		http.Error(w, "Date format wrong. Expecting format .../{:country_name}/{:begin_date-end_date}", status)
+		return
 	}
 
+	// Puts the start date into a variable
+	var startdate = fmt.Sprintf("%s-%s-%s", dateparts[0], dateparts[1], dateparts[2])
+	// Puts the end date into a variable
+	var enddate = fmt.Sprintf("%s-%s-%s", dateparts[3], dateparts[4], dateparts[5])
+
+	fmt.Println(startdate, " Date two:", enddate)
+
+	// Request for the country name to restcountries api
+	// Url request code based on RESTclient found at
+	//"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTclient/cmd/main.go"
+	// URL to invoke
+	url := fmt.Sprintf("https://restcountries.eu/rest/v2/name/%s?fields=borders;currencies", name)
+
+	r, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		fmt.Errorf("Error in creating request:", err.Error())
+	}
+
+	// Setting content type -> effect depends on the service provider
+	r.Header.Add("content-type", "application/json")
+	// Instantiate the client
+	client := &http.Client{}
+
+	// Issue request
+	res, err := client.Do(r)
+	//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
+	if err != nil {
+		fmt.Errorf("Error in response:", err.Error())
+	}
+
+	// If the http statuscode retrieved from restcountries is not 200 / "OK"
+	if res.StatusCode != 200 {
+		status := http.StatusNotFound
+		http.Error(w, "Error in request to the restcountries api", status)
+		return
+	}
+
+	// Print output
+	output, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Errorf("Error when reading response: ", err.Error())
+	}
+
+	// JSON into struct
+	err = json.Unmarshal([]byte(string(output)), &data)
+
+	if err != nil {
+		status := http.StatusNotFound
+		http.Error(w, "Error in parsing data from the restcountries api", status)
+		return
+	}
+
+	// Request for the currency name to exchangerates api
+	// Get currency information from exchangerates api
+	url = fmt.Sprintf("https://api.exchangeratesapi.io/history?start_at=%s&end_at=%s&symbols=%s",
+		startdate ,enddate ,data[0].Currencies[0].Code)
+
+	r, err = http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		fmt.Errorf("Error in creating request:", err.Error())
+	}
+
+	// Setting content type -> effect depends on the service provider
+	r.Header.Add("content-type", "application/json")
+	// Instantiate the client
+	client = &http.Client{}
+
+	// Issue request
+	res, err = client.Do(r)
+	//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
+	if err != nil {
+		fmt.Errorf("Error in response:", err.Error())
+	}
+
+	if res.StatusCode != 200 {
+		status := http.StatusNotFound
+		http.Error(w, "Error in request to the exchangerates api", status)
+		return
+	}
+
+	// Print output
+	output, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Errorf("Error when reading response: ", err.Error())
+	}
+
+	// The currency code of the base currency, used for conversion and the final json output
+	//var baseCurrency = data[0].Currencies[0].Name
+	fmt.Println([]byte(string(output)))
+
+	err = json.Unmarshal([]byte(string(output)), &exchangeHistory)
+
+	if err != nil {
+		// TODO proper error handling
+		fmt.Printf("\n ERROR IN UNMARSHAL cancelling")
+		return
+	}
+
+	/* Sorting the map
+	keys := make([]string, 0, len(exchangeHistory.rates))
+	for k := range exchangeHistory.rates {
+		fmt.Println(k)
+		keys = append(keys, k)
+	}
+	*/
+
+	// Exporting the data
+	w.Header().Set("Content-Type", "application/json")
+	// Converts the diagnosticData into json
+	outData, _ := json.Marshal(exchangeHistory)
+	// Writes the json
+	_, err = w.Write(outData)
+	//_, err := w.Write([]byte(string(data)))
+	// Error handling with code response
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, err := w.Write([]byte("500 Internal Server Error"))
+		if err != nil {
+			// TODO add error message here
+		}
+	}
 }
 
 // Handles the diag exchange/v1/diag/ request
@@ -494,14 +616,9 @@ func diag(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) != 5 {
 		status := http.StatusBadRequest
-		http.Error(w, "Expecting format .../exchange/<versionnumber (example: v1)>/diag/", status)
+		http.Error(w, "Expecting format .../exchange/{:version_number}/diag , example: /exchange/v1/diag", status)
 		return
 	}
-
-	// Prints the diagnostics
-	//var Timeupdated string
-	//Timeupdated = strconv.FormatFloat(uptime().Seconds(), 'f', 6, 64)
-	//Timeupdated = fmt.Sprintf("%ss", Timeupdated)
 
 	// Creates the diagnostic information
 	w.Header().Set("Content-Type", "application/json")
@@ -527,7 +644,7 @@ func diag(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Main function, opens the port and sends the requests on
+// Main function, opens the port and sends the requests on to functions that handle them
 func main() {
 	// Sets up the port of the application to 8080
 	port := os.Getenv("PORT")
