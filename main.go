@@ -204,8 +204,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		fmt.Errorf("Error when reading response: ", err.Error())
 	}
 
-	/* JSON into struct */
-
+	// JSON into struct
 	err = json.Unmarshal([]byte(string(output)), &data)
 
 	if err != nil {
@@ -213,8 +212,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		fmt.Printf("\n ERROR IN UNMARSHAL cancelling")
 		return
 	}
-
-
 
 	// Modified code retrieved from "https://stackoverflow.com/questions/22593259/check-if-string-is-int"
 	if i, err := strconv.Atoi(limit); err != nil {
@@ -233,8 +230,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		//fmt.Println(limit)
 		//fmt.Println(name)
 	}
-
-
 
 	// Get currency information from exchangerates api
 	url = fmt.Sprintf("https://api.exchangeratesapi.io/latest?base=%s", data[0].Currencies[0].Code)
@@ -429,6 +424,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		}
 	}
 
+	/*
 	fmt.Println(currencyData.Rates)
 	fmt.Println(outCountries[1])
 	fmt.Println(bordercountryCount)
@@ -444,16 +440,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	fmt.Printf("\n Now from the other one \n")
 
 	fmt.Println(string(output))
-}
-
-// Gets an input currency code and a base currency and outputs the rates of all currencies
-func returnCurrencyVal(currencyName string) CurrencyData{
-	var currencyInfo CurrencyData
-
-
-
-
-	return currencyInfo
+	 */
 }
 
 // Handles the exchange/v1/exchangehistory/ request
@@ -511,13 +498,10 @@ func diag(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	// Prints the diagnostics
-
 	//var Timeupdated string
 	//Timeupdated = strconv.FormatFloat(uptime().Seconds(), 'f', 6, 64)
 	//Timeupdated = fmt.Sprintf("%ss", Timeupdated)
-
 
 	// Creates the diagnostic information
 	w.Header().Set("Content-Type", "application/json")
