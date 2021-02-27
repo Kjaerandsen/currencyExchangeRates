@@ -148,19 +148,8 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-
-
+	// Limit from the url of the request "?limit=x"
 	var limit = r.FormValue("limit")
-
-	// Modified code retrieved from "https://stackoverflow.com/questions/22593259/check-if-string-is-int"
-	if _, err := strconv.Atoi(limit); err != nil {
-		// If it is not an integer
-		fmt.Println(name)
-	} else {
-		// If it is an integer
-		fmt.Println(limit)
-		fmt.Println(name)
-	}
 
 	// Url request code based on RESTclient found at
 	//"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTclient/cmd/main.go"
@@ -224,19 +213,93 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	/* 	For loop that goes through up to the first five bordering countries
-		and sends restcountries requests for their currency information
-	 */
-	// TODO change hardcoded five with variable from request
-	if len(data[0].Borders) > 5 {
-		// If there are more than five bordering countries, for loop for the first five
+	var bordercountryCount int
 
+	// Modified code retrieved from "https://stackoverflow.com/questions/22593259/check-if-string-is-int"
+	if i, err := strconv.Atoi(limit); err != nil {
+		// If it is not an integer
+		//fmt.Println(name)
+		bordercountryCount = len(data[0].Borders)
 	} else {
-		// If length is five or less for each loop
+		// If it is an integer and the integer is less than or equal to the size of the input data
+		// then the limit variable is used, else it just uses the full list
+		if i <= len(data[0].Borders) {
+			bordercountryCount = i
+		} else {
+			bordercountryCount = len(data[0].Borders)
+		}
 
+		//fmt.Println(limit)
+		//fmt.Println(name)
 	}
 
+	// Array of the country data used for final output, uses the OutCountry struct
+	// Size of 16 as that is the maximum amount of bordering countries a country in the world has.
+	var outCountries [16]OutCountry
+	// For the data from the bordering countries
+	var inputData BorderCountry
+	// Returns all the currency rates based on the base currency's value
+	var currencyData = returnCurrencyVal(data[0].Currencies[0].Name)
 
+	/*
+		For loop that goes through up to the first <bordercountryCount> bordering countries
+		and sends restcountries requests for their currency information
+	*/
+	for i := 0; i < bordercountryCount; i++ {
+		fmt.Println(i)
+		// Get country information from the restcountries api
+		// SAMPLE REQUEST FOR TESTING https://restcountries.eu/rest/v2/alpha/FIN?fields=name;currencies
+		url := fmt.Sprintf("https://restcountries.eu/rest/v2/alpha/%s?fields=name;currencies", data[0].Borders[i])
+
+		r, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			fmt.Errorf("Error in creating request:", err.Error())
+		}
+
+		// Setting content type -> effect depends on the service provider
+		r.Header.Add("content-type", "application/json")
+		// Instantiate the client
+		client := &http.Client{}
+
+		// Issue request
+		res, err := client.Do(r)
+		//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
+		if err != nil {
+			fmt.Errorf("Error in response:", err.Error())
+		}
+
+		if res.StatusCode != 200 {
+			status := http.StatusNotFound
+			http.Error(w, "Error in request to the restcountries api", status)
+			return
+		}
+
+		// Print output
+		output, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			fmt.Errorf("Error when reading response: ", err.Error())
+		}
+
+		// The currency code of the base currency, used for conversion and the final json output
+		//var baseCurrency = data[0].Currencies[0].Name
+
+		err = json.Unmarshal([]byte(string(output)), &inputData)
+
+		if err != nil {
+			// TODO proper error handling
+			fmt.Printf("\n ERROR IN UNMARSHAL cancelling")
+			return
+		}
+
+		// Put it into a map used later for currency info as well
+		outCountries[i].CountryName = inputData.Name
+		outCountries[i].CountryCurrency = inputData.Currencies[0].Code
+		outCountries[i].CountryRate = 1.1
+	}
+
+	fmt.Println(currencyData)
+	fmt.Println(outCountries[1])
+	fmt.Println(bordercountryCount)
 	fmt.Println(data[0].Borders[0])
 	fmt.Printf("\n")
 	fmt.Println(data[0].Borders[1])
@@ -249,14 +312,14 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	fmt.Printf("\n Now from the other one \n")
 
 	fmt.Println(string(output))
+}
 
-	/*
-	w.WriteHeader(http.StatusNotImplemented)
-	_, err := w.Write([]byte("501 Not Implemented"))
-	if err != nil {
-		// TODO add error message here
-	}
-	 */
+// Gets an input currency code and a base currency and outputs the rate
+func returnCurrencyVal(currencyName string) CurrencyData{
+	var currencyInfo CurrencyData
+
+
+	return currencyInfo
 }
 
 // Handles the exchange/v1/exchangehistory/ request
