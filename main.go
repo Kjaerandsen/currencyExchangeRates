@@ -54,9 +54,16 @@ type Currencies struct {
 
 // For the currency data retrieved from exchangeratesapi
 type CurrencyData struct {
-	Rates map[string]float64 	`json:"Rates"`
-	Base string 				`json:"base"`
-	Date string 				`json:"date"`
+	Rates 					map[string]float64 		`json:"Rates"`
+	Base 					string 					`json:"base"`
+	Date 					string 					`json:"date"`
+}
+
+type CurrencyRangeRates struct {
+	Rates  					map[string]interface {} 		`json:"rates"`
+	StartDate 				string							`json:"start_at"`
+	BaseCurrency 			string							`json:"base"`
+	EndDate 				string							`json:"end_at"`
 }
 
 // Returns the uptime of the service based on
@@ -287,12 +294,16 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		// Gets the rate
 		rate = currencyData.Rates[fmt.Sprintf("%s",inputData.Currencies[0].Code)]
 
+		// Check if the country has a currency specified in restcountries, ignore if not
+		if inputData.Currencies[0].Code != "" {
 		// Format the data for the json output
 		outputText = fmt.Sprintf(`%s"%s":{"currency":"%s","rate":"%f"}`,
 			outputText,
 			inputData.Name,
 			inputData.Currencies[0].Code,
 			rate)
+		}
+
 		// Adds trailing comma if it is not the last country
 		if i != bordercountryCount-1 {
 			outputText = fmt.Sprintf("%s,", outputText)
@@ -320,7 +331,8 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 	// For storing the data retrieved from the restcountries api
 	var data Country
 	//var exchangeHistory ExchangeHistory
-	var exchangeHistory map[string]interface {}
+	//var exchangeHistory map[string]interface {}
+	var exchangeHistory CurrencyRangeRates
 
 	// Modified code based on code retrieved from the "RESTstudent" example at
 	//"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTstudent/cmd/students_server.go"
