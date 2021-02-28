@@ -45,7 +45,7 @@ type BorderCountry struct {
 	Currencies				[]Currencies	`json:"currencies"`
 }
 
-/* For the currency information of a country */
+/* For the currency information of a country, used in the BorderCountry struct */
 type Currencies struct {
 	Code 					string 			`json:"code"`
 	Name 					string 			`json:"name"`
@@ -92,7 +92,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	var data Country
 	// For the amount of bordering countries to handle
 	var bordercountryCount int
-	// Array of the country data used for final output, uses the OutCountry struct
 	// For the data from the bordering countries
 	var inputData BorderCountry
 	// Returns all the currency rates based on the base currency's value
@@ -143,7 +142,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 
 	// Issue request
 	res, err := client.Do(r)
-	//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
 	if err != nil {
 		status := http.StatusInternalServerError
 		http.Error(w, "Error in parsing data", status)
@@ -227,8 +225,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	}
 
 	// The currency code of the base currency, used for conversion and the final json output
-	//var baseCurrency = data[0].Currencies[0].Name
-
 	err = json.Unmarshal(output, &currencyData)
 
 	if err != nil {
@@ -260,7 +256,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 
 		// Issue request
 		res, err := client.Do(r)
-		//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
 		if err != nil {
 			status := http.StatusInternalServerError
 			http.Error(w, "Error in parsing data", status)
@@ -307,7 +302,6 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 
 	w.Header().Set("Content-Type", "application/json")
 	_, err = w.Write([]byte(outputText))
-	//_, err := w.Write([]byte(string(data)))
 	// Error handling with code response
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -353,12 +347,28 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
+	// Check if the start date is before or equal to the end date
+	if dateparts[0] > dateparts[3] {
+		status := http.StatusBadRequest
+		http.Error(w, "Date format wrong. Expecting format .../{:country_name}/{:begin_date-end_date}", status)
+		return
+	} else if dateparts[0] == dateparts[3] {
+		if dateparts[1] > dateparts[4] {
+			status := http.StatusBadRequest
+			http.Error(w, "Date format wrong. Expecting format .../{:country_name}/{:begin_date-end_date}", status)
+			return
+		} else if dateparts[1] == dateparts[4] && dateparts[2] >= dateparts[5] {
+			status := http.StatusBadRequest
+			http.Error(w, "Date format wrong. Expecting format .../{:country_name}/{:begin_date-end_date}", status)
+			return
+		}
+	}
+
 	// Puts the start date into a variable
 	var startdate = fmt.Sprintf("%s-%s-%s", dateparts[0], dateparts[1], dateparts[2])
 	// Puts the end date into a variable
 	var enddate = fmt.Sprintf("%s-%s-%s", dateparts[3], dateparts[4], dateparts[5])
 
-	fmt.Println(startdate, " Date two:", enddate)
 
 	// Request for the country name to restcountries api
 	// Url request code based on RESTclient found at
@@ -380,7 +390,6 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 
 	// Issue request
 	res, err := client.Do(r)
-	//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
 	if err != nil {
 		status := http.StatusInternalServerError
 		http.Error(w, "Error in parsing data", status)
@@ -430,7 +439,6 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 
 	// Issue request
 	res, err = client.Do(r)
-	//res, err := client.Get(url) // Alternative: Direct issuing of requests, but fewer configuration options
 	if err != nil {
 		status := http.StatusInternalServerError
 		http.Error(w, "Error in parsing data", status)
@@ -451,10 +459,6 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	// The currency code of the base currency, used for conversion and the final json output
-	//var baseCurrency = data[0].Currencies[0].Name
-	fmt.Println(output)
-
 	err = json.Unmarshal(output, &exchangeHistory)
 
 	if err != nil {
@@ -463,28 +467,12 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	// Testing map traversing
-	/*
-	for k, v := range exchangeHistory {
-		fmt.Println(k, "contains", v)
-		if k == "rates" {
-			for i, j := range k {
-				fmt.Println("Date:", i,"Value:", j)
-		}
-	}
-
-	// Rates travering
-	//for i, j := range exchangeHistory["rates"] {
-
-	}*/
-
 	// Exporting the data
 	w.Header().Set("Content-Type", "application/json")
 	// Converts the diagnosticData into json
 	outData, _ := json.Marshal(exchangeHistory)
 	// Writes the json
 	_, err = w.Write(outData)
-	//_, err := w.Write([]byte(string(data)))
 	// Error handling with code response
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -533,7 +521,6 @@ func diag(w http.ResponseWriter, r *http.Request) {
 	data, _ := json.Marshal(diagnosticData)
 	// Writes the json
 	_, err := w.Write(data)
-	//_, err := w.Write([]byte(string(data)))
 	// Error handling with code response
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -547,6 +534,8 @@ func diag(w http.ResponseWriter, r *http.Request) {
 }
 
 // Main function, opens the port and sends the requests on to functions that handle them
+// Based on code found at
+// https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTstudent/cmd/students_server.go
 func main() {
 	// Sets up the port of the application to 8080
 	port := os.Getenv("PORT")
