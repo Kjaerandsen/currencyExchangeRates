@@ -125,6 +125,7 @@ Note: `<some value>` indicates placeholders for values to be populated by the se
 
 Credits:
 The description of the project contains a modified version the assignment instructions to describe the project.
+
 The url request is based on code from RESTclient found at
 "https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTclient/cmd/main.go"
 

@@ -25,40 +25,39 @@ It is of the form:
 }
 */
 type Diagnostic struct {
-	Exchangeratesapi      	string 	`json:"exchangeratesapi"`
-	Restcountries       	string  `json:"restcountries"`
-	Version 				string 	`json:"version"`
-	Uptime 					string 	`json:"uptime"`
+	Exchangeratesapi      	string 							`json:"exchangeratesapi"`
+	Restcountries       	string  						`json:"restcountries"`
+	Version 				string 							`json:"version"`
+	Uptime 					string 							`json:"uptime"`
 }
 
-/*
-For the response from the restcountries api
-*/
+// For the response from the restcountries api
 type Country []struct {
-	Currencies 				[]Currencies 	`json:"currencies"`
-	Borders 				[]string 		`json:"borders"`
+	Currencies 				[]Currencies 					`json:"currencies"`
+	Borders 				[]string 						`json:"borders"`
 }
 
-/* For the bordering countries and their currency */
+// For the bordering countries and their currency
 type BorderCountry struct {
-	Name 					string 			`json:"name"`
-	Currencies				[]Currencies	`json:"currencies"`
+	Name 					string 							`json:"name"`
+	Currencies				[]Currencies					`json:"currencies"`
 }
 
-/* For the currency information of a country, used in the BorderCountry struct */
+// For the currency information of a country, used in the BorderCountry struct
 type Currencies struct {
-	Code 					string 			`json:"code"`
-	Name 					string 			`json:"name"`
-	Symbol 					string 			`json:"symbol"`
+	Code 					string 							`json:"code"`
+	Name 					string 							`json:"name"`
+	Symbol 					string 							`json:"symbol"`
 }
 
 // For the currency data retrieved from exchangeratesapi
 type CurrencyData struct {
-	Rates 					map[string]float64 		`json:"Rates"`
-	Base 					string 					`json:"base"`
-	Date 					string 					`json:"date"`
+	Rates 					map[string]float64 				`json:"Rates"`
+	Base 					string 							`json:"base"`
+	Date 					string 							`json:"date"`
 }
 
+// For historical currency data between two dates, used in exchangehistory
 type CurrencyRangeRates struct {
 	Rates  					map[string]interface {} 		`json:"rates"`
 	StartDate 				string							`json:"start_at"`
@@ -77,7 +76,7 @@ func init() {
 	uptimeStart = time.Now()
 }
 
-/* Checks the status code */
+// Checks the status code
 func checkStatus(webUrl string) int {
 	// Get http status codes
 	resp, err := http.Head(webUrl)
@@ -108,11 +107,14 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	// The text that is output to the user at the end
 	var outputText string
 
+	// Start of the output text for the json response
 	outputText = `{"rates":{`
 
-	// Modified code based on code retrieved from the "RESTstudent" example at
-	//"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTstudent/cmd/students_server.go"
-	// Retrieves the country name from the url after the trailing slash
+	/*
+		Modified code based on code retrieved from the "RESTstudent" example at
+		"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTstudent/cmd/students_server.go"
+		Retrieves the country name from the url after the trailing slash
+	*/
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) != 5 {
 		status := http.StatusBadRequest
@@ -130,9 +132,11 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 	// Limit from the url of the request "?limit=x"
 	var limit = r.FormValue("limit")
 
-	// Url request code based on RESTclient found at
-	//"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTclient/cmd/main.go"
-	// URL to invoke
+	/*
+		Url request code based on RESTclient found at
+		"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTclient/cmd/main.go"
+		URL to invoke
+	 */
 	url := fmt.Sprintf("https://restcountries.eu/rest/v2/name/%s?fields=borders;currencies", name)
 
 	r, err := http.NewRequest(http.MethodGet, url, nil)
@@ -162,7 +166,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	// Print output
+	// Reading the data
 	output, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		status := http.StatusInternalServerError
@@ -223,7 +227,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	// Print output
+	// Reading the data
 	output, err = ioutil.ReadAll(res.Body)
 	if err != nil {
 		status := http.StatusInternalServerError
@@ -275,7 +279,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 			return
 		}
 
-		// Print output
+		// Reading the data
 		output, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			status := http.StatusInternalServerError
@@ -330,8 +334,6 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 
 	// For storing the data retrieved from the restcountries api
 	var data Country
-	//var exchangeHistory ExchangeHistory
-	//var exchangeHistory map[string]interface {}
 	var exchangeHistory CurrencyRangeRates
 
 	// Modified code based on code retrieved from the "RESTstudent" example at
@@ -381,11 +383,12 @@ func exchangehistory(w http.ResponseWriter, r *http.Request){
 	// Puts the end date into a variable
 	var enddate = fmt.Sprintf("%s-%s-%s", dateparts[3], dateparts[4], dateparts[5])
 
-
-	// Request for the country name to restcountries api
-	// Url request code based on RESTclient found at
-	//"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTclient/cmd/main.go"
-	// URL to invoke
+	/*
+		Request for the country name to restcountries api
+		Url request code based on RESTclient found at
+		"https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTclient/cmd/main.go"
+		URL to invoke
+	 */
 	url := fmt.Sprintf("https://restcountries.eu/rest/v2/name/%s?fields=borders;currencies", name)
 
 	r, err := http.NewRequest(http.MethodGet, url, nil)
@@ -545,9 +548,11 @@ func diag(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Main function, opens the port and sends the requests on to functions that handle them
-// Based on code found at
-// https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTstudent/cmd/students_server.go
+/*
+	Main function, opens the port and sends the requests on to functions that handle them
+	// Based on code found at
+	https://git.gvk.idi.ntnu.no/course/prog2005/prog2005-2021/-/blob/master/RESTstudent/cmd/students_server.go
+*/
 func main() {
 	// Sets up the port of the application to 8080
 	port := os.Getenv("PORT")
