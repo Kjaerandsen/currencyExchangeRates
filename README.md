@@ -68,6 +68,7 @@ Path: exchangeborder/{:country_name}{?limit={:number}}
 The limit parameter will be ignored if it does not contain an integer or if it is empty. 
 
 Where countries have multiple currencies, only the first one provided is reported. Where no currency is reported, the country is ignored.
+A return value of a currency of "0.00000" means that the exchangerates api doesn't have information on that currency.
 
 Example request: 
 `exchangeborder/norway?limit=5`
