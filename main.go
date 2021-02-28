@@ -264,7 +264,7 @@ func exchangeborder(w http.ResponseWriter, r *http.Request){
 
 		if res.StatusCode != 200 {
 			status := http.StatusNotFound
-			http.Error(w, "Error in request to the restcountries api", status)
+			http.Error(w, "Error in request to the restcountries api, please check your country spelling", status)
 			return
 		}
 
